@@ -32,8 +32,14 @@ GEMINI_API_KEY=your_gemini_api_key_here
 
 # Optional: Custom Gemini API base URL
 GEMINI_BASE_URL=https://generativelanguage.googleapis.com
-# Use this to connect to Gemini-compatible endpoints or regional mirrors
+# Use this to connect to:
+# - Gemini-compatible endpoints or regional mirrors
+# - OpenAI-compatible endpoints (automatically switches to OpenAI format)
 # Default: https://generativelanguage.googleapis.com (Google official API)
+# Examples:
+#   GEMINI_BASE_URL=https://generativelanguage.googleapis.com  # Official Google API (default)
+#   GEMINI_BASE_URL=https://api.openai.com/v1                 # OpenAI-compatible endpoint
+#   GEMINI_BASE_URL=https://your-proxy.com/v1                 # Custom OpenAI-compatible proxy
 
 # OpenAI API  
 OPENAI_API_KEY=your_openai_api_key_here
