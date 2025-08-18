@@ -131,15 +131,19 @@ class GeminiModelProvider(ModelProvider):
     def client(self):
         """Lazy initialization of Gemini client."""
         if self._client is None:
-            # Initialize client with custom base_url if provided
-            client_kwargs = {"api_key": self.api_key}
-            
-            # Add base_url if it's different from the default
+            # Check if we should use OpenAI-compatible API instead of Google's native API
             default_base_url = "https://generativelanguage.googleapis.com"
-            if self._base_url != default_base_url:
-                client_kwargs["base_url"] = self._base_url
             
-            self._client = genai.Client(**client_kwargs)
+            if self._base_url != default_base_url:
+                # Use OpenAI-compatible client for custom base URLs
+                import openai
+                self._client = openai.OpenAI(
+                    api_key=self.api_key,
+                    base_url=self._base_url
+                )
+            else:
+                # Use native Google Gemini client for default URL
+                self._client = genai.Client(api_key=self.api_key)
         return self._client
 
     def get_capabilities(self, model_name: str) -> ModelCapabilities:
@@ -234,29 +238,68 @@ class GeminiModelProvider(ModelProvider):
 
         for attempt in range(max_retries):
             try:
-                # Generate content
-                response = self.client.models.generate_content(
-                    model=resolved_name,
-                    contents=contents,
-                    config=generation_config,
-                )
+                # Check if using OpenAI-compatible API or native Gemini API
+                default_base_url = "https://generativelanguage.googleapis.com"
+                
+                if self._base_url != default_base_url:
+                    # Use OpenAI-compatible API call
+                    messages = []
+                    if system_prompt:
+                        messages.append({"role": "system", "content": system_prompt})
+                    messages.append({"role": "user", "content": prompt})
+                    
+                    response = self.client.chat.completions.create(
+                        model=resolved_name,
+                        messages=messages,
+                        temperature=temperature,
+                        max_tokens=max_output_tokens,
+                    )
+                    
+                    # Extract content and usage from OpenAI-style response
+                    content = response.choices[0].message.content
+                    usage = {
+                        "input_tokens": response.usage.prompt_tokens,
+                        "output_tokens": response.usage.completion_tokens,
+                        "total_tokens": response.usage.total_tokens,
+                    } if response.usage else {}
+                    
+                    return ModelResponse(
+                        content=content,
+                        usage=usage,
+                        model_name=resolved_name,
+                        friendly_name="Gemini",
+                        provider=ProviderType.GOOGLE,
+                        metadata={
+                            "thinking_mode": thinking_mode if capabilities.supports_extended_thinking else None,
+                            "finish_reason": response.choices[0].finish_reason or "STOP",
+                            "api_type": "openai_compatible",
+                        },
+                    )
+                else:
+                    # Use native Gemini API call
+                    response = self.client.models.generate_content(
+                        model=resolved_name,
+                        contents=contents,
+                        config=generation_config,
+                    )
 
-                # Extract usage information if available
-                usage = self._extract_usage(response)
+                    # Extract usage information if available
+                    usage = self._extract_usage(response)
 
-                return ModelResponse(
-                    content=response.text,
-                    usage=usage,
-                    model_name=resolved_name,
-                    friendly_name="Gemini",
-                    provider=ProviderType.GOOGLE,
-                    metadata={
-                        "thinking_mode": thinking_mode if capabilities.supports_extended_thinking else None,
-                        "finish_reason": (
-                            getattr(response.candidates[0], "finish_reason", "STOP") if response.candidates else "STOP"
-                        ),
-                    },
-                )
+                    return ModelResponse(
+                        content=response.text,
+                        usage=usage,
+                        model_name=resolved_name,
+                        friendly_name="Gemini",
+                        provider=ProviderType.GOOGLE,
+                        metadata={
+                            "thinking_mode": thinking_mode if capabilities.supports_extended_thinking else None,
+                            "finish_reason": (
+                                getattr(response.candidates[0], "finish_reason", "STOP") if response.candidates else "STOP"
+                            ),
+                            "api_type": "native_gemini",
+                        },
+                    )
 
             except Exception as e:
                 last_exception = e
