@@ -172,6 +172,39 @@ def _validate_openai_base_url(url: str) -> str:
 
 OPENAI_BASE_URL = _validate_openai_base_url(os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"))
 
+# Gemini Configuration
+# GEMINI_BASE_URL: Custom base URL for Gemini API
+# Allows using Gemini-compatible endpoints or regional mirrors
+# Default is Google's official Gemini API endpoint
+# Examples: "https://generativelanguage.googleapis.com", "https://your-proxy.com"
+def _validate_gemini_base_url(url: str) -> str:
+    """
+    Validate Gemini base URL format.
+    
+    Args:
+        url: The base URL to validate
+        
+    Returns:
+        The validated URL
+        
+    Raises:
+        ValueError: If URL format is invalid
+    """
+    if not url:
+        return "https://generativelanguage.googleapis.com"
+    
+    # Basic URL validation
+    if not url.startswith(('http://', 'https://')):
+        raise ValueError(f"Gemini base URL must start with http:// or https://, got: {url}")
+    
+    # Remove trailing slash for consistency
+    if url.endswith('/'):
+        url = url.rstrip('/')
+    
+    return url
+
+GEMINI_BASE_URL = _validate_gemini_base_url(os.getenv("GEMINI_BASE_URL", "https://generativelanguage.googleapis.com"))
+
 # Language/Locale Configuration
 # LOCALE: Language/locale specification for AI responses
 # When set, all AI tools will respond in the specified language while

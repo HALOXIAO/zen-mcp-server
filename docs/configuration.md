@@ -30,6 +30,11 @@ OPENAI_API_KEY=your-openai-key
 GEMINI_API_KEY=your_gemini_api_key_here
 # Get from: https://makersuite.google.com/app/apikey
 
+# Optional: Custom Gemini API base URL
+GEMINI_BASE_URL=https://generativelanguage.googleapis.com
+# Use this to connect to Gemini-compatible endpoints or regional mirrors
+# Default: https://generativelanguage.googleapis.com (Google official API)
+
 # OpenAI API  
 OPENAI_API_KEY=your_openai_api_key_here
 # Get from: https://platform.openai.com/api-keys

@@ -121,12 +121,25 @@ class GeminiModelProvider(ModelProvider):
         super().__init__(api_key, **kwargs)
         self._client = None
         self._token_counters = {}  # Cache for token counting
+        
+        # Store base_url for client initialization
+        # Import config here to avoid circular imports
+        from config import GEMINI_BASE_URL
+        self._base_url = kwargs.get("base_url", GEMINI_BASE_URL)
 
     @property
     def client(self):
         """Lazy initialization of Gemini client."""
         if self._client is None:
-            self._client = genai.Client(api_key=self.api_key)
+            # Initialize client with custom base_url if provided
+            client_kwargs = {"api_key": self.api_key}
+            
+            # Add base_url if it's different from the default
+            default_base_url = "https://generativelanguage.googleapis.com"
+            if self._base_url != default_base_url:
+                client_kwargs["base_url"] = self._base_url
+            
+            self._client = genai.Client(**client_kwargs)
         return self._client
 
     def get_capabilities(self, model_name: str) -> ModelCapabilities:
