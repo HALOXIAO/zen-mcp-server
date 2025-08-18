@@ -170,8 +170,11 @@ class OpenAIModelProvider(OpenAICompatibleProvider):
 
     def __init__(self, api_key: str, **kwargs):
         """Initialize OpenAI provider with API key."""
-        # Set default OpenAI base URL, allow override for regions/custom endpoints
-        kwargs.setdefault("base_url", "https://api.openai.com/v1")
+        # Import config here to avoid circular imports
+        from config import OPENAI_BASE_URL
+        
+        # Use configured base URL, allow override for regions/custom endpoints
+        kwargs.setdefault("base_url", OPENAI_BASE_URL)
         super().__init__(api_key, **kwargs)
 
     def get_capabilities(self, model_name: str) -> ModelCapabilities:

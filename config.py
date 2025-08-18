@@ -136,6 +136,42 @@ def _calculate_mcp_prompt_limit() -> int:
 
 MCP_PROMPT_SIZE_LIMIT = _calculate_mcp_prompt_limit()
 
+# OpenAI Configuration
+# OPENAI_BASE_URL: Custom base URL for OpenAI API
+# Allows using OpenAI-compatible endpoints or regional mirrors
+# Default is OpenAI's official API endpoint
+# Examples: "https://api.openai.com/v1", "https://your-proxy.com/v1"
+def _validate_openai_base_url(url: str) -> str:
+    """
+    Validate OpenAI base URL format.
+    
+    Args:
+        url: The base URL to validate
+        
+    Returns:
+        The validated URL
+        
+    Raises:
+        ValueError: If URL format is invalid
+    """
+    if not url:
+        return "https://api.openai.com/v1"
+    
+    # Basic URL validation
+    if not url.startswith(('http://', 'https://')):
+        raise ValueError(f"OpenAI base URL must start with http:// or https://, got: {url}")
+    
+    # Ensure URL ends with /v1 for OpenAI compatibility
+    if not url.endswith('/v1'):
+        if url.endswith('/'):
+            url = url + 'v1'
+        else:
+            url = url + '/v1'
+    
+    return url
+
+OPENAI_BASE_URL = _validate_openai_base_url(os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"))
+
 # Language/Locale Configuration
 # LOCALE: Language/locale specification for AI responses
 # When set, all AI tools will respond in the specified language while
